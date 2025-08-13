@@ -21,7 +21,7 @@ namespace FlightManagementCompany.Models
         public int BookingId { get; set; }
         public Booking Booking { get; set; } // Navigation property to the Booking entity
 
-        // Foreign key to the Passenger entity
+        // Foreign key to the flight entity
         [ForeignKey("Flight")]
         public int FlightId { get; set; } // Foreign key to the Flight entity
         public Flight Flight { get; set; } // Navigation property to the Flight entity

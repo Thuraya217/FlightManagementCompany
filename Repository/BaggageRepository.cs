@@ -39,6 +39,12 @@ namespace FlightManagementCompany.Repository
             }
         }
 
+        public void AddRangeBaggage(List<Baggage> baggageList)
+        {
+            _db.Baggages.AddRange(baggageList);
+            _db.SaveChanges();
+        }
+
         public IEnumerable<Baggage> GetAllBaggages() => _db.Baggages.ToList();
         public Baggage GetBaggageById(int id) => _db.Baggages.Find(id);
     }

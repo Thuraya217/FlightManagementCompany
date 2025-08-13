@@ -21,7 +21,5 @@ namespace FlightManagementCompany.Models
         [ForeignKey("Flight")]
         public int FlightId { get; set; } // Foreign key to the Flight entity
         public virtual Flight Flight { get; set; } // Navigation property to the Flight entity
-
-
     }
 }

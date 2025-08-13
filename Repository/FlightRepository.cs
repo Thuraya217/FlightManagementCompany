@@ -39,6 +39,19 @@ namespace FlightManagementCompany.Repository
             }
         }
 
+        public List<Flight> GetFlightsByDateRange(DateTime from, DateTime to)
+        {
+            return _db.Flights
+                 .Where(f => f.DepartureUtc <= to && f.ArrivalUtc >= from)
+                 .ToList();
+        }
+
+        public List<Flight> GetFlightsByRoute(int routeId)
+        {
+            return _db.Flights
+                .Where(f => f.RouteId == routeId)
+                .ToList();
+        }
 
         public IEnumerable<Flight> GetAllFlights() => _db.Flights.ToList();
         public Flight GetFlightById(int id) => _db.Flights.Find(id);

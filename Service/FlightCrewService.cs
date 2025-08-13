@@ -15,5 +15,20 @@ namespace FlightManagementCompany.Service
         {
             _repo = new FlightCrewRepository(db);
         }
+
+        //public void CreateSampleFlightCrews()
+        //{
+        //    if (!_repo.GetAllFlightCrews().Any())
+        //    {
+        //        var flightCrews = new List<FlightCrew>
+        //        {
+                   
+        //        };
+        //        foreach (var flightCrew in flightCrews)
+        //        {
+        //            _repo.AddFlightCrew(flightCrew);
+        //        }
+        //    }
+        //}
     }
 }

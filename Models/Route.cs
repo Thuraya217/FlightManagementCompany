@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 
 namespace FlightManagementCompany.Models
 {
-
     public class Route
     {
         [Key]

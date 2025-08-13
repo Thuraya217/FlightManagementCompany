@@ -39,6 +39,15 @@ namespace FlightManagementCompany.Repository
             }
         }
 
+        public List <Booking> GetBookingsByDateRange(DateTime from, DateTime to)
+        {
+            var bookings = _db.Bookings
+                .Where(b => b.BookingDate >= from && b.BookingDate <= to)
+                .ToList();
+
+            return bookings;
+        }
+
         public IEnumerable<Booking> GetAllBookings() => _db.Bookings.ToList();
         public Booking GetBookingById(int id) => _db.Bookings.Find(id);
     }

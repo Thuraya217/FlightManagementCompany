@@ -38,7 +38,18 @@ namespace FlightManagementCompany.Repository
             }
         }
 
-        public IEnumerable<Aircraft> GetAircraft() => _db.Aircrafts.ToList();
+        public List<Aircraft> GetAircraftDueForMaintenance(DateTime beforeDate)
+        {
+            var aircraftsDueForMaintenance = _db.Aircrafts
+                .Where(a => a.AircraftMaintenances
+                .OrderByDescending(m => m.MaintenanceDate) 
+                .FirstOrDefault().MaintenanceDate < beforeDate)
+                .ToList();
+
+            return aircraftsDueForMaintenance;
+        }
+
+        public IEnumerable<Aircraft> GetAllAircrafts() => _db.Aircrafts.ToList();
         public Aircraft GetAircraftById(int id) => _db.Aircrafts.Find(id);
     }
 }

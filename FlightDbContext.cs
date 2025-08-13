@@ -5,6 +5,7 @@ namespace FlightManagementCompany
 {
     public class FlightDbContext : DbContext
     {
+        // DbSet properties for each entity
         public DbSet <Aircraft> Aircrafts { get; set; }
         public DbSet<Flight> Flights { get; set; }
         public DbSet<Route> Routes { get; set; }

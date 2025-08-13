@@ -39,6 +39,20 @@ namespace FlightManagementCompany.Repository
             }
         }
 
+        public List <Ticket> GetTicketsByBooking (string bookingRef)
+        {
+            return _db.Tickets
+                .Where(t => t.Booking.BookingRef == bookingRef)
+                .ToList();
+        }
+
+        public List <Ticket> GetTickesByPassenger (int passengerId)
+        {
+            return _db.Tickets
+                .Where(t => t.Booking.PassengerId == passengerId)
+                .ToList();
+        }
+
         public IEnumerable<Ticket> GetAllTickets() => _db.Tickets.ToList();
         public Ticket GetTicketById(int id) => _db.Tickets.Find(id);
     }

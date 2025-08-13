@@ -39,6 +39,13 @@ namespace FlightManagementCompany.Repository
             }
         }
 
+        public List<CrewMember> GetCrewMembersByRole(CrewRole role)
+        {
+            return _db.CrewMembers
+            .Where(cm => cm.Role == role)
+            .ToList();
+        }
+
         public IEnumerable<CrewMember> GetAllCrewMembers() => _db.CrewMembers.ToList();
         public CrewMember GetCrewMemberById(int id) => _db.CrewMembers.Find(id);
     }
