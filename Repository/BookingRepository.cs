@@ -7,7 +7,7 @@ using FlightManagementCompany.Models;
 
 namespace FlightManagementCompany.Repository
 {
-    public class BookingRepository
+    public class BookingRepository : IBookingRepository
     {
         private readonly FlightDbContext _db;
 
@@ -39,7 +39,7 @@ namespace FlightManagementCompany.Repository
             }
         }
 
-        public List <Booking> GetBookingsByDateRange(DateTime from, DateTime to)
+        public List<Booking> GetBookingsByDateRange(DateTime from, DateTime to)
         {
             var bookings = _db.Bookings
                 .Where(b => b.BookingDate >= from && b.BookingDate <= to)

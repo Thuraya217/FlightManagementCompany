@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FlightManagementCompany.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace FlightManagementCompany.Repository
 {
-    public class CrewMemberRepository
+    public class CrewMemberRepository : ICrewMemberRepository
     {
         private readonly FlightDbContext _db;
 
@@ -44,6 +45,14 @@ namespace FlightManagementCompany.Repository
             return _db.CrewMembers
             .Where(cm => cm.Role == role)
             .ToList();
+        }
+
+        public List<CrewMember> GetAllWithFlights()
+        {
+            return _db.CrewMembers
+                .Include(c => c.FlightCrews)
+                .ThenInclude(fc => fc.Flight)
+                .ToList();
         }
 
         public IEnumerable<CrewMember> GetAllCrewMembers() => _db.CrewMembers.ToList();

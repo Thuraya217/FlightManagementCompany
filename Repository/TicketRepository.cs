@@ -7,7 +7,7 @@ using FlightManagementCompany.Models;
 
 namespace FlightManagementCompany.Repository
 {
-    public class TicketRepository
+    public class TicketRepository : ITicketRepository
     {
         private readonly FlightDbContext _db;
 
@@ -39,14 +39,14 @@ namespace FlightManagementCompany.Repository
             }
         }
 
-        public List <Ticket> GetTicketsByBooking (string bookingRef)
+        public List<Ticket> GetTicketsByBooking(string bookingRef)
         {
             return _db.Tickets
                 .Where(t => t.Booking.BookingRef == bookingRef)
                 .ToList();
         }
 
-        public List <Ticket> GetTickesByPassenger (int passengerId)
+        public List<Ticket> GetTickesByPassenger(int passengerId)
         {
             return _db.Tickets
                 .Where(t => t.Booking.PassengerId == passengerId)

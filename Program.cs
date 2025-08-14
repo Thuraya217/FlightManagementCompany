@@ -1,5 +1,6 @@
 ﻿using FlightManagementCompany.Models;
 using FlightManagementCompany.Service;
+using System.Collections.Generic;
 
 namespace FlightManagementCompany
 {
@@ -10,6 +11,9 @@ namespace FlightManagementCompany
             // Ensure the database is created
             using FlightDbContext db = new FlightDbContext();
             db.Database.EnsureCreated();
+
+            // Initialize the database with seed data
+            SeedData.Initialize(db);
 
             // Initialize services
             AircraftService AS = new AircraftService(db);
@@ -25,17 +29,20 @@ namespace FlightManagementCompany
             TicketService TS = new TicketService(db);
 
             // Create sample data
-            AS.CreateSampleAircrafts();
-            AM.CreateSampleAircraftMaintenances();
-            PS.CreateSamplePassengers();
-            FCS.CreateSampleFlightCrews();
-            BS.CreateSampleBookings();
-            ARS.CreateSampleAirports();
-            FS.CreateSampleFlights();
-            BGS.CreateSampleBaggages();
-            CMS.CreateSampleCrewMembers();
-            RS.CreateSampleRoutes();
-            TS.CreateSampleTickets();
+            //AS.CreateSampleAircrafts();
+            //AM.CreateSampleAircraftMaintenances();
+            //PS.CreateSamplePassengers();
+            //FCS.CreateSampleFlightCrews();
+            //BS.CreateSampleBookings();
+            //ARS.CreateSampleAirports();
+            //FS.CreateSampleFlights();
+            //BGS.CreateSampleBaggages();
+            //CMS.CreateSampleCrewMembers();
+            //RS.CreateSampleRoutes();
+            //TS.CreateSampleTickets();
+
+
+
         }
     }
 }

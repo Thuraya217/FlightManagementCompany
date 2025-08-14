@@ -1,5 +1,6 @@
 ﻿using FlightManagementCompany.Models;
 using FlightManagementCompany.Repository;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,37 +12,28 @@ namespace FlightManagementCompany.Service
 {
     public class AircraftService
     {
-        private readonly AircraftRepository _repo;
+        private readonly AircraftRepository _AircraftRepo;
 
         public AircraftService(FlightDbContext db)
         {
-            _repo = new AircraftRepository(db);
+            _AircraftRepo = new AircraftRepository(db);
         }
 
-        public void CreateSampleAircrafts()
+        public IEnumerable<Aircraft> MaintenanceAlert(double maxHours = 1000, int maxDays = 180)
         {
-            if (!_repo.GetAircraft().Any())
-            {
-                var Aircrafts = new List<Aircraft>
-                {
-                        new Aircraft { TailNumber = "A1001", Model = "Boeing 737", Capacity = 150 },
-                        new Aircraft { TailNumber = "A1002", Model = "Airbus A320", Capacity = 180 },
-                        new Aircraft { TailNumber = "A1003", Model = "Boeing 787 Dreamliner", Capacity = 250 },
-                        new Aircraft { TailNumber = "A1004", Model = "Airbus A350", Capacity = 300 },
-                        new Aircraft { TailNumber = "A1005", Model = "Embraer E190", Capacity = 100 },
-                        new Aircraft { TailNumber = "A1006", Model = "Bombardier CS300", Capacity = 130 },
-                        new Aircraft { TailNumber = "A1007", Model = "Boeing 777", Capacity = 280 },
-                        new Aircraft { TailNumber = "A1008", Model = "Airbus A321", Capacity = 200 },
-                        new Aircraft { TailNumber = "A1009", Model = "Boeing 757", Capacity = 180 },
-                        new Aircraft { TailNumber = "A1010", Model = "McDonnell Douglas MD-80", Capacity = 160 }
-                };
+            double avgSpeedKmH = 800; // simulate speed
+            var today = DateTime.UtcNow;
 
-                // Add sample aircrafts to the repository
-                foreach (var a in Aircrafts)
-                {
-                    _repo.AddAircraft(a);
-                }
-            }
+            var aircrafts = _AircraftRepo.GetAllAircrafts(); 
+
+            return aircrafts
+                .Where(a =>
+                    a.Flights.Sum(f => f.Route.DistanceKm) / avgSpeedKmH > maxHours ||
+                    a.AircraftMaintenances
+                     .OrderByDescending(m => m.MaintenanceDate)
+                     .FirstOrDefault()?.MaintenanceDate < today.AddDays(-maxDays)
+                ).ToList();
         }
     }
 }
+ 

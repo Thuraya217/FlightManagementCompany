@@ -7,7 +7,7 @@ using FlightManagementCompany.Models;
 
 namespace FlightManagementCompany.Repository
 {
-    public class RouteRepository
+    public class RouteRepository : IRouteRepository
     {
         private readonly FlightDbContext _db;
 

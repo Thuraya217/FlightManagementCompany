@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FlightManagementCompany.Repository
 {
-    public class AircraftRepository
+    public class AircraftRepository : IAircraftRepository
     {
         private readonly FlightDbContext _db;
 
@@ -42,7 +42,7 @@ namespace FlightManagementCompany.Repository
         {
             var aircraftsDueForMaintenance = _db.Aircrafts
                 .Where(a => a.AircraftMaintenances
-                .OrderByDescending(m => m.MaintenanceDate) 
+                .OrderByDescending(m => m.MaintenanceDate)
                 .FirstOrDefault().MaintenanceDate < beforeDate)
                 .ToList();
 

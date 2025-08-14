@@ -1,5 +1,6 @@
 ﻿using FlightManagementCompany.Models;
 using FlightManagementCompany.Repository;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,38 +11,62 @@ namespace FlightManagementCompany.Service
 {
     public class PassengerService
     {
-        private readonly PassengerRepository _repo;
+        private readonly PassengerRepository _PassengerRepo;
 
         public PassengerService(FlightDbContext db)
         {
-            _repo = new PassengerRepository(db);
+            _PassengerRepo = new PassengerRepository(db);
+        }
+        public IEnumerable<PassengerItineraryDto> PassengersWithConnections(int maxHoursBetween = 6)
+        {
+            return _PassengerRepo.GetAllPassengers()
+                .Where(p => p.Bookings.Any())
+                .Select(p => new PassengerItineraryDto
+                {
+                    PassengerId = p.PassengerId,
+                    PassengerName = p.FullName,
+                    Segments = p.Bookings
+                        .SelectMany(b => b.Tickets)
+                        .OrderBy(t => t.Flight.DepartureUtc)
+                        .Select(t => new ItinSegmentDto
+                        {
+                            FlightId = t.FlightId,
+                            FlightNumber = t.Flight.FlightNumber,
+                            Origin = t.Flight.Route.OriginAirport.IATA,
+                            Destination = t.Flight.Route.DestinationAirport.IATA,
+                            DepartureUtc = t.Flight.DepartureUtc,
+                            ArrivalUtc = t.Flight.ArrivalUtc,
+                            AircraftTail = t.Flight.Aircraft.TailNumber
+                        }).ToList()
+                })
+                .Where(p => p.Segments.Count > 1)
+                .ToList();
         }
 
-        public List<Passenger> CreateSamplePassengers(int count = 50)
+        public IEnumerable<(string PassengerName, int FlightsCount, int TotalDistance)> FrequentFliers(int topN = 10)
         {
-            if (_repo.GetAllPassengers().Any())
-                return _repo.GetAllPassengers().ToList();
-
-            var random = new Random();
-            var nationalities = new[] { "USA", "UK", "Canada", "Germany", "France", "India", "China", "Brazil", "Australia", "Egypt" };
-            var passengers = new List<Passenger>();
-
-            for (int i = 1; i <= count; i++)
-            {
-                var passenger = new Passenger
+            return _PassengerRepo.GetAllPassengers()
+                .Select(p => new
                 {
-                    FullName = $"Passenger {i}",
-                    PassportNumber = "P" + i.ToString("D5"),
-                    Nationality = nationalities[random.Next(nationalities.Length)],
-                    DateOfBirth = DateTime.UtcNow.AddYears(-random.Next(18, 70))
-                };
+                    p.FullName,
+                    FlightsCount = p.Bookings.SelectMany(b => b.Tickets).Count(),
+                    TotalDistance = p.Bookings.SelectMany(b => b.Tickets)
+                                              .Sum(t => t.Flight.Route.DistanceKm)
+                })
+                .OrderByDescending(x => x.FlightsCount)
+                .Take(topN)
+                .Select(x => (x.FullName, x.FlightsCount, x.TotalDistance))
+                .ToList();
+        }
 
-                _repo.AddPassenger(passenger);
-                passengers.Add(passenger);
-            }
+        public decimal ForecastNextWeekBookings()
+        {
+            var bookings = _PassengerRepo.GetAllPassengers()
+                .SelectMany(p => p.Bookings)
+                .Where(b => b.BookingDate >= DateTime.UtcNow.AddDays(-7))
+                .Count();
 
-            Console.WriteLine($"Seeded {passengers.Count} passengers.");
-            return passengers;
+            return bookings / 7m;
         }
     }
 }

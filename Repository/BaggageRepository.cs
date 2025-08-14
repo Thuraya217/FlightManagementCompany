@@ -7,7 +7,7 @@ using FlightManagementCompany.Models;
 
 namespace FlightManagementCompany.Repository
 {
-    public class BaggageRepository
+    public class BaggageRepository : IBaggageRepository
     {
         private readonly FlightDbContext _db;
 

@@ -7,7 +7,7 @@ using FlightManagementCompany.Models;
 
 namespace FlightManagementCompany.Repository
 {
-    public class FlightCrewRepository
+    public class FlightCrewRepository : IFlightCrewRepository
     {
         private readonly FlightDbContext _db;
 

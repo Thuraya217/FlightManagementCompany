@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FlightManagementCompany.Repository
 {
-    public class AircraftMaintenanceRepository
+    public class AircraftMaintenanceRepository : IAircraftMaintenanceRepository
     {
         private readonly FlightDbContext _db;
 

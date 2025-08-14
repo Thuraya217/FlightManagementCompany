@@ -1,5 +1,6 @@
 ﻿using FlightManagementCompany.Models;
 using FlightManagementCompany.Repository;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,111 +11,89 @@ namespace FlightManagementCompany.Service
 {
     public class FlightService
     {
-        private readonly FlightRepository _repo;
-        private readonly RouteRepository _routeRepo;
-        private readonly AircraftRepository _aircraftRepo;
+        private readonly FlightRepository _FlightRepo;
 
         public FlightService(FlightDbContext db)
         {
-            _repo = new FlightRepository(db);
-            _routeRepo = new RouteRepository(db);
-            _aircraftRepo = new AircraftRepository(db);
+            _FlightRepo = new FlightRepository(db);
         }
 
-        public void CreateSampleFlights()
+        public IEnumerable<FlightManifestDto> GetDailyManifest(DateTime date)
         {
-            if (_repo.GetAllFlights().Any()) return;
-
-            var random = new Random();
-            var routes = _routeRepo.GetAllRoutes().ToList();
-            var aircrafts = _aircraftRepo.GetAllAircrafts().ToList();
-
-            var flights = new List<Flight>();
-
-            for (int i = 1; i <= 30; i++)
-            {
-                var route = routes[random.Next(routes.Count)];
-                var aircraft = aircrafts[random.Next(aircrafts.Count)];
-
-                var departure = DateTime.UtcNow.AddDays(random.Next(30, 61))
-                                                .AddHours(random.Next(0, 24))
-                                                .AddMinutes(random.Next(0, 60));
-
-                var arrival = departure.AddHours(random.Next(1, 6));
-
-                var statusValues = Enum.GetValues(typeof(FlightStatus));
-                var status = (FlightStatus)statusValues.GetValue(random.Next(statusValues.Length));
-
-                flights.Add(new Flight
+            return _FlightRepo.GetAllFlights()
+                .Where(f => f.DepartureUtc.Date == date.Date)
+                .Select(f => new FlightManifestDto
                 {
-                    FlightNumber = "FL" + i.ToString("D3"),
-                    DepartureUtc = departure,
-                    ArrivalUtc = arrival,
-                    Status = status,
-                    RouteId = route.RouteId,
-                    AircraftId = aircraft.AircraftId
-                });
-            }
-
-            foreach (var flight in flights)
-            {
-                _repo.AddFlight(flight);
-            }
+                    FlightNumber = f.FlightNumber,
+                    DepUtc = f.DepartureUtc,
+                    ArrUtc = f.ArrivalUtc,
+                    Origin = f.Route.OriginAirport.IATA,
+                    Destination = f.Route.DestinationAirport.IATA,
+                    AircraftTail = f.Aircraft.TailNumber,
+                    PassengerCount = f.Tickets.Count(),
+                    TotalBaggageKg = f.Tickets.SelectMany(t => t.Baggages).Sum(b => b.WeightKg),
+                    Crew = f.FlightCrews
+                        .Select(fc => new CrewDto
+                        {
+                            CrewName = fc.CrewMember.FullName,
+                            Role = fc.CrewMember.Role.ToString()
+                        }).ToList()
+                }).ToList();
         }
 
-            public IEnumerable<FlightManifestDto> GetDailyFlightManifest(DateTime date)
-            {
-                var flights = _repo.GetAllFlights()
-                    .Where(f => f.DepartureUtc.Date == date.Date)
-                    .Select(f => new FlightManifestDto
-                    {
-                        FlightNumber = f.FlightNumber,
-                        DepUtc = f.DepartureUtc,
-                        ArrUtc = f.ArrivalUtc,
-                        Origin = f.Route.OriginAirport.IATA,
-                        Destination = f.Route.DestinationAirport.IATA,
-                        AircraftTail = f.Aircraft.TailNumber,
-                        PassengerCount = f.Tickets.Count(),
-                        TotalBaggageKg = f.Tickets.SelectMany(t => t.Baggages).Sum(b => b.WeightKg),
-                        Crew = f.FlightCrews
-                                .Select(fc => new CrewDto
-                                {
-                                    CrewName = fc.CrewMember.FullName,
-                                    Role = fc.CrewMember.Role.ToString()
-                                })
-                                .ToList()
-                    });
-
-                return flights;
-            }
-
-
-        public IEnumerable<RouteRevenueDto> GetTopRoutesByRevenue(DateTime from, DateTime to)
+        public double OnTimePerformance(DateTime start, DateTime end, int thresholdMinutes = 15)
         {
-            var result = _repo.GetAllFlights()
-                .Where(f => f.DepartureUtc.Date >= from.Date && f.ArrivalUtc.Date <= to.Date)
-                .GroupBy(f => f.RouteId) 
-                .Select(g =>
-                {
-                    var route = g.First().Route; 
-                    var tickets = g.SelectMany(f => f.Tickets); 
-                    var revenue = tickets.Sum(t => t.Fare);
-                    var seatsSold = tickets.Count();
-                    var avgFare = seatsSold > 0 ? revenue / seatsSold : 0;
+            var flights = _FlightRepo.GetAllFlights()
+                .Where(f => f.DepartureUtc >= start && f.DepartureUtc <= end)
+                .ToList();
 
-                    return new RouteRevenueDto
-                    {
-                        RouteId = g.Key,
-                        Origin = route.OriginAirport.IATA,
-                        Destination = route.DestinationAirport.IATA,
-                        Revenue = revenue,
-                        SeatsSold = seatsSold,
-                        AvgFare = avgFare
-                    };
+            if (!flights.Any()) return 0;
+
+            var onTime = flights.Count(f => Math.Abs((f.ArrivalUtc - f.DepartureUtc).TotalMinutes) <= thresholdMinutes);
+            return (double)onTime / flights.Count * 100;
+        }
+
+        public IEnumerable<(string FlightNumber, double Occupancy)> HighOccupancyFlights(double threshold = 0.8)
+        {
+            return _FlightRepo.GetAllFlights()
+                .Select(f => new
+                {
+                    f.FlightNumber,
+                    Occupancy = (double)f.Tickets.Count / f.Aircraft.Capacity
                 })
-                .OrderByDescending(r => r.Revenue); 
+                .Where(f => f.Occupancy > threshold)
+                .Select(f => (f.FlightNumber, f.Occupancy))
+                .ToList();
+        }
 
-            return result;
+        public IEnumerable<string> GetAvailableSeats(int flightId)
+        {
+            var flight = _FlightRepo.GetAllFlightsQuery()
+                .Include(f => f.Tickets)
+                .Include(f => f.Aircraft)
+                .First(f => f.FlightId == flightId);
+
+            var bookedSeats = flight.Tickets.Select(t => t.SeatNumber).ToList();
+
+            var allSeats = Enumerable.Range(1, flight.Aircraft.Capacity)
+                .SelectMany(row => "ABCDEF".Select(seat => $"{row}{seat}"))
+                .Take(flight.Aircraft.Capacity)
+                .ToList();
+
+            return allSeats.Except(bookedSeats);
+        }
+
+        public IEnumerable<(DateTime Date, decimal RunningRevenue)> RunningRevenue()
+        {
+            var dailyRevenue = _FlightRepo.GetAllFlights()
+                .SelectMany(f => f.Tickets)
+                .GroupBy(t => t.Flight.DepartureUtc.Date)
+                .OrderBy(g => g.Key)
+                .Select(g => new { Date = g.Key, Revenue = g.Sum(t => t.Fare) })
+                .ToList();
+
+            decimal cumulative = 0;
+            return dailyRevenue.Select(d => (d.Date, cumulative += d.Revenue)).ToList();
         }
     }
 }

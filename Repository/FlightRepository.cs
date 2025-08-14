@@ -7,7 +7,7 @@ using FlightManagementCompany.Models;
 
 namespace FlightManagementCompany.Repository
 {
-    public class FlightRepository
+    public class FlightRepository : IFlightRepository
     {
         private readonly FlightDbContext _db;
 
@@ -53,7 +53,13 @@ namespace FlightManagementCompany.Repository
                 .ToList();
         }
 
+        public IQueryable<Flight> GetAllFlightsQuery()
+        {
+            return _db.Flights.AsQueryable();
+        }
+
         public IEnumerable<Flight> GetAllFlights() => _db.Flights.ToList();
         public Flight GetFlightById(int id) => _db.Flights.Find(id);
+
     }
 }
